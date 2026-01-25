@@ -117,7 +117,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.rankingIdea++
 				if m.rankingIdea >= len(m.ideas) {
 					m.focused = "store"
-					m.storeIndeasIntoFile()
+					m.storeIdeasIntoFile()
 				}
 			}
 
@@ -127,7 +127,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.rankingIdea++
 				if m.rankingIdea >= len(m.ideas) {
 					m.focused = "store"
-					m.storeIndeasIntoFile()
+					m.storeIdeasIntoFile()
 				}
 			}
 
@@ -216,7 +216,7 @@ func (m *Model) updateWrittenIdeasViewport() {
 	m.writtenIdeas.GotoBottom()
 }
 
-func (m Model) storeIndeasIntoFile() {
+func (m Model) storeIdeasIntoFile() {
 	if len(m.ideaRank[1]) == 0 && len(m.ideaRank[2]) == 0 {
 		return
 	}

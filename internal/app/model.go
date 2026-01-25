@@ -18,7 +18,7 @@ import (
 
 type Model struct {
 	// General
-	focused      string  // FSM: 'minutes', 'seconds', 'idea', 'ranking', 'store'
+	focused string // FSM: 'minutes', 'seconds', 'idea', 'ranking', 'store'
 
 	// Timer Settings
 	startedAt    time.Time
@@ -27,7 +27,7 @@ type Model struct {
 	secondsInput textinput.Model
 
 	// Ideas
-	ideasStorage IdeaStrorage
+	ideasStorage IdeaStorage
 	ideaInput    textarea.Model
 	writtenIdeas viewport.Model
 

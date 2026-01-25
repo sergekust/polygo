@@ -1,23 +1,23 @@
 package app
 
-type IdeaStrorage struct {
+type IdeaStorage struct {
 	ideas              []string
 	ranks              map[int][]int
 	currentRankingIdea int
 }
 
-func NewIdeaStorage() IdeaStrorage {
-	return IdeaStrorage{
+func NewIdeaStorage() IdeaStorage {
+	return IdeaStorage{
 		ideas: make([]string, 0),
 		ranks: map[int][]int{1: make([]int, 0), 2: make([]int, 0)},
 	}
 }
 
-func (is IdeaStrorage) AreAllIdeasRanked() bool {
+func (is IdeaStorage) AreAllIdeasRanked() bool {
 	return is.currentRankingIdea >= len(is.ideas)
 }
 
-func (is *IdeaStrorage) RankCurrentIdea(isLiked bool) {
+func (is *IdeaStorage) RankCurrentIdea(isLiked bool) {
 	if isLiked {
 		is.ranks[1] = append(is.ranks[1], is.currentRankingIdea)
 	} else {
@@ -27,11 +27,11 @@ func (is *IdeaStrorage) RankCurrentIdea(isLiked bool) {
 	is.currentRankingIdea++
 }
 
-func (is *IdeaStrorage) Add(idea string) {
+func (is *IdeaStorage) Add(idea string) {
 	is.ideas = append(is.ideas, idea)
 }
 
-func (is IdeaStrorage) GetGoodIdeas() *[]string {
+func (is IdeaStorage) GetGoodIdeas() *[]string {
 	goodIdeas := make([]string, 0, 2)
 	for _, v := range is.ranks[1] {
 		goodIdeas = append(goodIdeas, is.ideas[v])
@@ -39,7 +39,7 @@ func (is IdeaStrorage) GetGoodIdeas() *[]string {
 	return &goodIdeas
 }
 
-func (is IdeaStrorage) GetBadIdeas() *[]string {
+func (is IdeaStorage) GetBadIdeas() *[]string {
 	goodIdeas := make([]string, 0, 2)
 	for _, v := range is.ranks[2] {
 		goodIdeas = append(goodIdeas, is.ideas[v])

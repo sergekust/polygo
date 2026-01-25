@@ -35,6 +35,9 @@ type Model struct {
 	rankingIdeaViewport viewport.Model
 	goodIdeasViewport   viewport.Model
 	badIdeasViewport    viewport.Model
+
+	// File with result
+	resultFilename string
 }
 
 func NewModel() Model {
@@ -83,6 +86,7 @@ func NewModel() Model {
 		goodIdeasViewport:   goodIdeasViewport,
 		badIdeasViewport:    badIdeasViewport,
 		rankingIdeaViewport: rankingIdeaViewport,
+		resultFilename:      "IDEAS.md",
 	}
 }
 
@@ -242,9 +246,8 @@ func (m Model) storeIndeasIntoFile() {
 		}
 	}
 
-	filename := "IDEAS.md"
 	permissions := os.FileMode(0644)
-	os.WriteFile(filename, []byte(sb.String()), permissions)
+	os.WriteFile(m.resultFilename, []byte(sb.String()), permissions)
 	sb.Reset()
 }
 
@@ -315,7 +318,10 @@ func (m Model) View() string {
 	}
 
 	if m.focused == "store" {
-		confirmation, _ := glamour.Render("# DONE\n\nFile `IDEAS.md` is saved!", "dark")
+		confirmation, _ := glamour.Render(
+			fmt.Sprintf("# DONE\n\nFile `%s` is saved!", m.resultFilename), 
+			"dark",
+		)
 		s += confirmation
 		s += HelpStyle("\n\n[Ctrl+C] - exit")
 	}

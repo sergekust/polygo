@@ -17,9 +17,9 @@ import (
 )
 
 type Model struct {
-	timer timer.Model
-
 	// Timer Settings
+	startedAt    time.Time
+	timer        timer.Model
 	minutesInput textinput.Model
 	secondsInput textinput.Model
 	focused      string
@@ -156,6 +156,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				cmd := m.timer.Init()
 
 				// Start listening idea input
+				m.startedAt = time.Now()
 				m.focused = "idea"
 				m.ideaInput.Focus()
 				return m, cmd
@@ -218,15 +219,24 @@ func (m Model) storeIndeasIntoFile() {
 
 	var sb strings.Builder
 
+	// Write session info
+	sb.WriteString(
+		fmt.Sprintf("Session started: `%s`", m.startedAt.Format("2006-01-02 15:04:05")),
+	)
+	sb.WriteString(
+		fmt.Sprintf("\nSession closed: `%s`", time.Now().Format("2006-01-02 15:04:05")),
+	)
+
+	// Write ideas
 	if len(m.ideaRank[1]) > 0 {
-		sb.WriteString("# Fav ideas")
+		sb.WriteString("\n\n# Fav ideas\n")
 		for _, v := range m.ideaRank[1] {
 			sb.WriteString(fmt.Sprintf("%s---", m.ideas[v]))
 		}
 	}
 
 	if len(m.ideaRank[2]) > 0 {
-		sb.WriteString("\n\n# Ideas to be polished")
+		sb.WriteString("\n\n# Ideas to be polished\n")
 		for _, v := range m.ideaRank[2] {
 			sb.WriteString(fmt.Sprintf("%s---", m.ideas[v]))
 		}

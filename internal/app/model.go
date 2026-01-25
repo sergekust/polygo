@@ -25,13 +25,11 @@ type Model struct {
 	focused      string
 
 	// Ideas
-	ideas        []string
+	ideasStorage IdeaStrorage
 	ideaInput    textarea.Model
 	writtenIdeas viewport.Model
 
 	// Ranking
-	ideaRank            map[int][]int
-	rankingIdea         int
 	rankingIdeaViewport viewport.Model
 	goodIdeasViewport   viewport.Model
 	badIdeasViewport    viewport.Model
@@ -82,11 +80,11 @@ func NewModel() Model {
 		secondsInput:        secondsInput,
 		ideaInput:           ideaInput,
 		writtenIdeas:        writtenIdeaViewport,
-		ideaRank:            map[int][]int{1: make([]int, 0), 2: make([]int, 0)},
 		goodIdeasViewport:   goodIdeasViewport,
 		badIdeasViewport:    badIdeasViewport,
 		rankingIdeaViewport: rankingIdeaViewport,
 		resultFilename:      "IDEAS.md",
+		ideasStorage:        NewIdeaStorage(),
 	}
 }
 
@@ -113,9 +111,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "left":
 			if m.focused == "ranking" {
-				m.ideaRank[1] = append(m.ideaRank[1], m.rankingIdea)
-				m.rankingIdea++
-				if m.rankingIdea >= len(m.ideas) {
+				m.ideasStorage.RankCurrentIdea(true)
+				if m.ideasStorage.AreAllIdeasRanked() {
 					m.focused = "store"
 					m.storeIdeasIntoFile()
 				}
@@ -123,9 +120,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "right":
 			if m.focused == "ranking" {
-				m.ideaRank[2] = append(m.ideaRank[2], m.rankingIdea)
-				m.rankingIdea++
-				if m.rankingIdea >= len(m.ideas) {
+				m.ideasStorage.RankCurrentIdea(false)
+				if m.ideasStorage.AreAllIdeasRanked() {
 					m.focused = "store"
 					m.storeIdeasIntoFile()
 				}
@@ -186,7 +182,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if clearedInput == "" {
 					return m, nil
 				}
-				m.ideas = append(m.ideas, fmt.Sprintf("\n%s\n\n", clearedInput))
+				m.ideasStorage.Add(fmt.Sprintf("\n%s\n\n", clearedInput))
 				m.ideaInput.Reset()
 				return m, nil
 			}
@@ -211,13 +207,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) updateWrittenIdeasViewport() {
-	str, _ := glamour.Render(strings.Join(m.ideas, "---"), "dark")
+	str, _ := glamour.Render(strings.Join(m.ideasStorage.ideas, "---"), "dark")
 	m.writtenIdeas.SetContent(str)
 	m.writtenIdeas.GotoBottom()
 }
 
 func (m Model) storeIdeasIntoFile() {
-	if len(m.ideaRank[1]) == 0 && len(m.ideaRank[2]) == 0 {
+	if len(m.ideasStorage.ideas) == 0 {
 		return
 	}
 
@@ -232,17 +228,19 @@ func (m Model) storeIdeasIntoFile() {
 	)
 
 	// Write ideas
-	if len(m.ideaRank[1]) > 0 {
+	goodIdeas := m.ideasStorage.GetGoodIdeas()
+	if len(*goodIdeas) > 0 {
 		sb.WriteString("\n\n# Fav ideas\n")
-		for _, v := range m.ideaRank[1] {
-			sb.WriteString(fmt.Sprintf("%s---", m.ideas[v]))
+		for _, v := range *goodIdeas {
+			sb.WriteString(fmt.Sprintf("%s---", v))
 		}
 	}
 
-	if len(m.ideaRank[2]) > 0 {
+	badIdeas := m.ideasStorage.GetBadIdeas()
+	if len(*badIdeas) > 0 {
 		sb.WriteString("\n\n# Ideas to be polished\n")
-		for _, v := range m.ideaRank[2] {
-			sb.WriteString(fmt.Sprintf("%s---", m.ideas[v]))
+		for _, v := range *badIdeas {
+			sb.WriteString(fmt.Sprintf("%s---", v))
 		}
 	}
 
@@ -253,26 +251,19 @@ func (m Model) storeIdeasIntoFile() {
 
 func (m *Model) updateRanking() {
 	// Update good ideas
-	goodIdeas := make([]string, 0, 2)
-	for _, v := range m.ideaRank[1] {
-		goodIdeas = append(goodIdeas, m.ideas[v])
-	}
-
-	goodIdeasContent, _ := glamour.Render(strings.Join(goodIdeas, "---"), "dark")
+	goodIdeas := m.ideasStorage.GetGoodIdeas()
+	goodIdeasContent, _ := glamour.Render(strings.Join(*goodIdeas, "---"), "dark")
 	m.goodIdeasViewport.SetContent(goodIdeasContent)
 	m.goodIdeasViewport.GotoBottom()
 
 	// Update current
-	rankingIdeaContent, _ := glamour.Render(m.ideas[m.rankingIdea], "dark")
+	rankingIdeaContent, _ := glamour.Render(m.ideasStorage.ideas[m.ideasStorage.currentRankingIdea], "dark")
 	m.rankingIdeaViewport.SetContent(rankingIdeaContent)
 	m.rankingIdeaViewport.GotoTop()
 
 	// Update bad ideas
-	badIdeas := make([]string, 0, 2)
-	for _, v := range m.ideaRank[2] {
-		badIdeas = append(badIdeas, m.ideas[v])
-	}
-	badIdeasContent, _ := glamour.Render(strings.Join(badIdeas, "---"), "dark")
+	badIdeas := m.ideasStorage.GetBadIdeas()
+	badIdeasContent, _ := glamour.Render(strings.Join(*badIdeas, "---"), "dark")
 	m.badIdeasViewport.SetContent(badIdeasContent)
 	m.badIdeasViewport.GotoBottom()
 }
@@ -319,7 +310,7 @@ func (m Model) View() string {
 
 	if m.focused == "store" {
 		confirmation, _ := glamour.Render(
-			fmt.Sprintf("# DONE\n\nFile `%s` is saved!", m.resultFilename), 
+			fmt.Sprintf("# DONE\n\nFile `%s` is saved!", m.resultFilename),
 			"dark",
 		)
 		s += confirmation

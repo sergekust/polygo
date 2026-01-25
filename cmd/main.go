@@ -312,7 +312,7 @@ func (m model) View() string {
 
 		s += lipgloss.JoinHorizontal(lipgloss.Top, nextIdeaView, storedIdeasView)
 
-		s += helpStyle("\n\n⇄ TAB - store idea")
+		s += helpStyle("\n\n⇄ TAB - store an idea")
 	}
 
 	if m.focused == "minutes" || m.focused == "seconds" {

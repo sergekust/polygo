@@ -53,10 +53,9 @@ type model struct {
 	timer timer.Model
 
 	// Timer Settings
-	timeoutSeconds int
-	minutesInput   textinput.Model
-	secondsInput   textinput.Model
-	focused        string
+	minutesInput textinput.Model
+	secondsInput textinput.Model
+	focused      string
 
 	// Ideas
 	ideas        []string
@@ -183,8 +182,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if err != nil {
 					secondsValue = 0
 				}
-				m.timeoutSeconds = secondsValue + (minutesValue * 60)
-				timeout := time.Second * time.Duration(m.timeoutSeconds)
+				timeout := time.Second * time.Duration(secondsValue+(minutesValue*60))
 
 				// Set timer
 				m.timer = timer.NewWithInterval(timeout, time.Second)

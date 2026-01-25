@@ -17,12 +17,14 @@ import (
 )
 
 type Model struct {
+	// General
+	focused      string  // FSM: 'minutes', 'seconds', 'idea', 'ranking', 'store'
+
 	// Timer Settings
 	startedAt    time.Time
 	timer        timer.Model
 	minutesInput textinput.Model
 	secondsInput textinput.Model
-	focused      string
 
 	// Ideas
 	ideasStorage IdeaStrorage
@@ -75,7 +77,7 @@ func NewModel() Model {
 	badIdeasViewport.Style = BadIdeaViewportStyle
 
 	return Model{
-		focused:             "minutes", // minutes, seconds, idea, ranking, store
+		focused:             "minutes",
 		minutesInput:        minutesInput,
 		secondsInput:        secondsInput,
 		ideaInput:           ideaInput,

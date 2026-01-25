@@ -289,7 +289,7 @@ func (m Model) View() string {
 
 		s += lipgloss.JoinHorizontal(lipgloss.Top, nextIdeaView, storedIdeasView)
 
-		s += HelpStyle("\n\n⇄ TAB - store an idea")
+		s += HelpStyle("\n\n[⇄] TAB - store an idea")
 	}
 
 	if m.focused == "minutes" || m.focused == "seconds" {
@@ -299,11 +299,11 @@ func (m Model) View() string {
 			m.secondsInput.View(),
 		)
 
-		s += HelpStyle("\n\n⇄ TAB - jump between minutes and seconds\n⏎ ENTER - start a session\nCtrl+C - exit")
+		s += HelpStyle("\n\n[⇄] TAB - jump between minutes and seconds\n[⏎] ENTER - start a session\n[Ctrl+C] - exit")
 	}
 
 	if m.focused == "ranking" {
-		s += "Whoa, brain freeze!\nTimer's buzzed—time to sort ideas. Swipe left for the fav ones, right for the nahs.\nLet's make magic! ✨\n\n"
+		s += "Time's up!\nLet's sort ideas ✨\nSwipe left for the fav ones, right for the nahs.\n\n"
 
 		m.updateRanking()
 		goodIdeasView := m.goodIdeasViewport.View()
@@ -311,13 +311,13 @@ func (m Model) View() string {
 		badIdeasView := m.badIdeasViewport.View()
 
 		s += lipgloss.JoinHorizontal(lipgloss.Top, goodIdeasView, currentIdeaView, badIdeasView)
-		s += HelpStyle("\n\n← LEFT - like\n→ RIGHT - need polishing\nCtrl+C - exit")
+		s += HelpStyle("\n\n[←] LEFT - like\n[→] RIGHT - need polishing\n[Ctrl+C] - exit")
 	}
 
 	if m.focused == "store" {
 		confirmation, _ := glamour.Render("# DONE\n\nFile `IDEAS.md` is saved!", "dark")
 		s += confirmation
-		s += HelpStyle("\n\nCtrl+C - exit")
+		s += HelpStyle("\n\n[Ctrl+C] - exit")
 	}
 
 	return s

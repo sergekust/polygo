@@ -1,5 +1,7 @@
 package app
 
+import "slices"
+
 type IdeaStorage struct {
 	ideas              []string
 	ranks              map[int][]int
@@ -25,6 +27,10 @@ func (is *IdeaStorage) RankCurrentIdea(isLiked bool) {
 	}
 
 	is.currentRankingIdea++
+}
+
+func (is *IdeaStorage) RemoveCurrentIdea() {
+	is.ideas = slices.Delete(is.ideas, is.currentRankingIdea, is.currentRankingIdea+1)
 }
 
 func (is *IdeaStorage) Add(idea string) {

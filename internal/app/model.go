@@ -129,6 +129,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 
+		case "x", "X":
+			if m.focused == "ranking" {
+				m.ideasStorage.RemoveCurrentIdea()
+				if m.ideasStorage.AreAllIdeasRanked() {
+					m.focused = "store"
+					m.storeIdeasIntoFile()
+				}
+			}
+
 		case "enter":
 			if m.focused == "minutes" {
 				m.focused = "seconds"
@@ -307,7 +316,7 @@ func (m Model) View() string {
 		badIdeasView := m.badIdeasViewport.View()
 
 		s += lipgloss.JoinHorizontal(lipgloss.Top, goodIdeasView, currentIdeaView, badIdeasView)
-		s += HelpStyle("\n\n[←] LEFT - like\n[→] RIGHT - need polishing\n[Ctrl+C] - exit")
+		s += HelpStyle("\n\n[←] LEFT - like\n[→] RIGHT - need polishing\n[X] - Delete idea\n[Ctrl+C] - exit")
 	}
 
 	if m.focused == "store" {

@@ -85,7 +85,7 @@ func NewModel() Model {
 		goodIdeasViewport:   goodIdeasViewport,
 		badIdeasViewport:    badIdeasViewport,
 		rankingIdeaViewport: rankingIdeaViewport,
-		resultFilename:      "IDEAS.md",
+		resultFilename:      "IDEAS",
 		ideasStorage:        NewIdeaStorage(),
 	}
 }
@@ -255,8 +255,9 @@ func (m Model) storeIdeasIntoFile() {
 		}
 	}
 
+	filename := fmt.Sprintf("%s-%s.md", m.resultFilename, time.Now().Format("2006-01-02"))
 	permissions := os.FileMode(0644)
-	os.WriteFile(m.resultFilename, []byte(sb.String()), permissions)
+	os.WriteFile(filename, []byte(sb.String()), permissions)
 	sb.Reset()
 }
 

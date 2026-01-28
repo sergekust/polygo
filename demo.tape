@@ -4,7 +4,7 @@ Set WindowBar Colorful
 Set Margin 20
 Set MarginFill "#674EFF"
 Set BorderRadius 10
-Set Width 2380
+Set Width 2370
 Set Height 830
 
 Hide
@@ -12,36 +12,34 @@ Type "./bin/cmd"
 Enter
 Show
 Sleep 0.5
-Type@600ms "00"
+Type@500ms "00"
 Enter
-Type@900ms "17"
+Type@800ms "13"
+Enter
+Type@400ms "Game"
 Enter
 Sleep 0.1
-Type "## The game is about rabbits"
-Tab
-Type "You are playing for a `rabbit`"
+Type "## Large scale strategy"
+Enter
+Sleep 0.1
+Type@75ms "You are playing for a `rabbit`"
 Backspace@50ms 7
-Type "SUPER`-rabbit"
+Type "KING` of rabbits"
 Tab
 Type "Wolves are monsters"
 Tab
-Type "Enemies are looking for:"
+Type "You should:"
 Enter
-Type "- player"
+Type "- expand"
 Enter
-Type "- fish"
+Type "- explore"
 Enter
-Type "- gold"
-Enter
-Sleep 2.3
 Tab
-Sleep 0.6
+Sleep 2.3
 Left
-Sleep 0.7
-Left
-Sleep 0.8
+Sleep 1.2
 Right
-Sleep 0.9
+Sleep 1.1
 Left
-Sleep 1
+Sleep 1.3
 Ctrl+C

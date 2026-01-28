@@ -18,7 +18,11 @@ import (
 
 type Model struct {
 	// General
-	focused string // FSM: 'minutes', 'seconds', 'idea', 'ranking', 'store'
+	focused string // FSM: 'minutes', 'seconds', 'topic', 'idea', 'ranking', 'store'
+
+	// Topic Settings
+	topic      string
+	topicInput textinput.Model
 
 	// Timer Settings
 	startedAt    time.Time
@@ -37,7 +41,8 @@ type Model struct {
 	badIdeasViewport    viewport.Model
 
 	// File with result
-	resultFilename string
+	resultFilenameBase string
+	resultFilename     string
 }
 
 func NewModel() Model {
@@ -54,6 +59,12 @@ func NewModel() Model {
 	secondsInput.Width = 2
 	secondsInput.Prompt = ""
 	secondsInput.Blur()
+
+	topicInput := textinput.New()
+	topicInput.Placeholder = "May be empty"
+	topicInput.Prompt = ""
+	topicInput.Width = 70
+	topicInput.Blur()
 
 	ideaInput := textarea.New()
 	ideaInput.Placeholder = ""
@@ -78,6 +89,7 @@ func NewModel() Model {
 
 	return Model{
 		focused:             "minutes",
+		topicInput:          topicInput,
 		minutesInput:        minutesInput,
 		secondsInput:        secondsInput,
 		ideaInput:           ideaInput,
@@ -85,7 +97,7 @@ func NewModel() Model {
 		goodIdeasViewport:   goodIdeasViewport,
 		badIdeasViewport:    badIdeasViewport,
 		rankingIdeaViewport: rankingIdeaViewport,
-		resultFilename:      "IDEAS",
+		resultFilenameBase:  "IDEAS",
 		ideasStorage:        NewIdeaStorage(),
 	}
 }
@@ -147,9 +159,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 			if m.focused == "seconds" {
+				m.focused = "topic"
+				m.secondsInput.Blur()
+				m.topicInput.Focus()
+				return m, nil
+			}
+
+			if m.focused == "topic" {
 				// Stop listening timer settings input
 				m.minutesInput.Blur()
 				m.secondsInput.Blur()
+				m.topicInput.Blur()
 
 				// Set timer timeout
 				minutesValue, err := strconv.Atoi(m.minutesInput.Value())
@@ -166,6 +186,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.timer = timer.NewWithInterval(timeout, time.Second)
 				cmd := m.timer.Init()
 
+				// Set topic
+				if len(m.topicInput.Value()) > 0 {
+					m.topic = m.topicInput.Value()
+				}
+
 				// Start listening idea input
 				m.startedAt = time.Now()
 				m.focused = "idea"
@@ -181,9 +206,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			if m.focused == "seconds" {
-				m.focused = "minutes"
+				m.focused = "topic"
 				m.secondsInput.Blur()
+				m.topicInput.Focus()
+				return m, nil
+			}
+			if m.focused == "topic" {
+				m.focused = "minutes"
 				m.minutesInput.Focus()
+				m.topicInput.Blur()
 				return m, nil
 			}
 			if m.focused == "idea" {
@@ -207,10 +238,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(cmds...)
 	}
 
-	if m.minutesInput.Focused() || m.secondsInput.Focused() {
-		cmds := make([]tea.Cmd, 2)
+	if m.minutesInput.Focused() || m.secondsInput.Focused() || m.topicInput.Focused() {
+		cmds := make([]tea.Cmd, 3)
 		m.minutesInput, cmds[0] = m.minutesInput.Update(msg)
 		m.secondsInput, cmds[1] = m.secondsInput.Update(msg)
+		m.topicInput, cmds[2] = m.topicInput.Update(msg)
 		return m, tea.Batch(cmds...)
 	}
 
@@ -223,7 +255,17 @@ func (m *Model) updateWrittenIdeasViewport() {
 	m.writtenIdeas.GotoBottom()
 }
 
-func (m Model) storeIdeasIntoFile() {
+func (m *Model) generateResultFilename() (filename string) {
+	if len(m.topic) > 0 {
+		filename = fmt.Sprintf("%s-%s-%s.md", m.resultFilenameBase, m.topic, time.Now().Format("2006-01-02"))
+	} else {
+		filename = fmt.Sprintf("%s-%s.md", m.resultFilenameBase, time.Now().Format("2006-01-02"))
+	}
+	m.resultFilename = filename
+	return
+}
+
+func (m *Model) storeIdeasIntoFile() {
 	if len(m.ideasStorage.ideas) == 0 {
 		return
 	}
@@ -255,7 +297,8 @@ func (m Model) storeIdeasIntoFile() {
 		}
 	}
 
-	filename := fmt.Sprintf("%s-%s.md", m.resultFilename, time.Now().Format("2006-01-02"))
+	// Generate result filename
+	filename := m.generateResultFilename()
 	permissions := os.FileMode(0644)
 	os.WriteFile(filename, []byte(sb.String()), permissions)
 	sb.Reset()
@@ -298,14 +341,15 @@ func (m Model) View() string {
 		s += HelpStyle("\n\n[⇄] TAB - store an idea")
 	}
 
-	if m.focused == "minutes" || m.focused == "seconds" {
+	if m.focused == "minutes" || m.focused == "seconds" || m.focused == "topic" {
 		s += fmt.Sprintf(
-			"Set timer:\n%s: %s",
+			"Set timer: %s: %s\nTopic: %s",
 			m.minutesInput.View(),
 			m.secondsInput.View(),
+			m.topicInput.View(),
 		)
 
-		s += HelpStyle("\n\n[⇄] TAB - jump between minutes and seconds\n[⏎] ENTER - start a session\n[Ctrl+C] - exit")
+		s += HelpStyle("\n\n[⇄] TAB - jump between forms\n[⏎] ENTER - start a session\n[Ctrl+C] - exit")
 	}
 
 	if m.focused == "ranking" {
